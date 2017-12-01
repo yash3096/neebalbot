@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>Javascript Webcam Demo - <MyCodingTricks/></title>
+</head>
+<body>
+ 
+<h3 id="my_emotion">No emotion detected</h3>
+ <div id="my_camera"></div>
+ 
+    <!-- A button for taking snaps -->
+ 
+<form>
+        <input type=button class="btn btn-success" value="Take Snapshot" onClick="take_snapshot()">
+    </form>
+ 
+
+       <div id="results" class="well">Your captured image will appear here...</div>
+ 
+    <!-- First, include the Webcam.js JavaScript Library -->
+    <script type="text/javascript" src="js/webcam.js"></script>
+     <script src="//ajax.googleapis.com/ajax/libs/jquery/1.11.1/jquery.min.js"></script>
+    <!-- Configure a few settings and attach camera -->
+    <script language="JavaScript">
+          var path="";
+       
+        Webcam.set({
+            width: 320,
+            height: 240,
+            image_format: 'jpeg',
+            jpeg_quality: 90
+        });
+        Webcam.attach( '#my_camera' );
+       
+         var path="";
+        function take_snapshot() {
+            // take snapshot and get image data
+         	 Webcam.snap( function(data_uri) {
+                   // alert(""+data_uri);
+                // display results in page
+                document.getElementById('results').innerHTML = 
+                    '<h2>Here is your image:</h2>' + 
+                    '<img src="'+data_uri+'"/>';
+                                Webcam.upload( data_uri, 'upload.php', function(code, text) {
+                                            // Upload complete!
+                                            // 'code' will be the HTTP response code from the server, e.g. 200
+                                            // 'text' will be the raw response content
+
+                                          // alert(""+text+"\n"+code);
+                                           path = ""+text;
+                                           console.log(path);
+                                           //alert("trying to call emotion api");
+                                            emotion(path);
+                                });
+            } );
+        }
+         function emotion(imgpath) {
+            //alert("Emotion api method called");
+    
+            $.ajax({
+            url: "https://westus.api.cognitive.microsoft.com/emotion/v1.0/recognize",
+            beforeSend: function(xhrObj){
+                // Request headers
+                xhrObj.setRequestHeader("Content-Type","application/json");
+                xhrObj.setRequestHeader("Ocp-Apim-Subscription-Key","802ff96641e5405b86ffd26b42694742");
+            },
+            type: "POST",
+            // Request body
+            data: JSON.stringify({
+            "url": imgpath
+          }),
+        })
+        .done(function(data) {
+           // alert("success");
+           console.log(data);
+           var a = [];
+           var b = ["angry","contempt","disgusted","fear","happiness","neutral","sadness","surprise"];
+           a[0] = parseFloat(data[0].scores.anger);
+           a[1] = parseFloat(data[0].scores.contempt);
+           a[2] = parseFloat(data[0].scores.disgust);
+           a[3] = parseFloat(data[0].scores.fear);
+           a[4] = parseFloat(data[0].scores.happiness);
+           a[5] = parseFloat(data[0].scores.neutral);
+           a[6] = parseFloat(data[0].scores.sadness);
+           a[7]  = parseFloat(data[0].scores.surprise);
+ 
+var str = ["Yoga", "Action Movie", "Nature Spots", "Friends", "Celebrate", "Rest", "Happy movie", "Jazz Event"];
+        var max =0.00;
+           for(i=0;i<8;i++){
+        console.log(a[i]);
+        console.log(b[i]);
+               if (a[i]>max)
+               {
+                   max = a[i];
+                   //console.log(a[i]);
+                   $("#my_emotion").text("You seem to be "+b[i]+" so the best thing for you to do is " + str[i]);
+               }
+           }
+
+        })
+        .fail(function(error) {
+            console.log(error);
+            });
+      /*
+        $.ajax({
+
+            url: "https://api.projectoxford.ai/emotion/v1.0/recognize?" + $.param(params),
+            beforeSend: function(xhrObj){
+                // Request headers
+
+                xhrObj.setRequestHeader("Content-Type","application/json");
+                xhrObj.setRequestHeader("Ocp-Apim-Subscription-Key","802ff96641e5405b86ffd26b42694742");
+            },
+            type: "POST",
+            // Request body
+            data: '{"url": imgpath}',
+        })
+        .done(function(data) {
+			alert("success");
+			alert(data[0].scores.disgust);
+			alert(data);
+			alert(data[0].faceRectangle.left);
+			//alert(data[0].scores.);
+            console.log(data);
+        })
+        .fail(function() {
+            alert("error");
+        });*/
+    }
+
+        
+     </script>
+    
+
+</body>
+</html>								
